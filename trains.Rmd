@@ -1,0 +1,54 @@
+---
+title: "Trains"
+author: "Sophie Webster"
+date: "3/10/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F)
+library(gov.1005.data)
+library(tidyverse)
+library(infer)
+```
+
+
+```{r}
+treatment_mean<-train %>% filter(treatment == "Treated") %>% summarize(avg_inc = mean(income))
+
+virtual_resampled_means <- train %>%
+  filter(treatment == "Treated") %>% 
+  rep_sample_n(size = 51, replace = T, reps =35) %>%
+  summarise(avg_inc = mean(income))
+
+ggplot(virtual_resampled_means, aes(avg_inc)) + geom_histogram() + labs(x = "Resample Mean Income")
+```
+
+```{r confidence interval}
+treatment_resampled_means %>%
+  pull(avg_inc) %>%
+  quantile(c(0.025,0.975))
+
+# applies to overall train population
+# 95% chance that the true mean falls within this range
+
+  control_resampled_means <- train %>%
+  filter(treatment == "Control") %>% 
+  rep_sample_n(size = 51, replace = T, reps =35) %>%
+  summarise(avg_inc = mean(income))
+  
+  control_mean <- train %>%
+  filter(treatment == "Control") %>%
+  summarise(avg_con = mean(income))
+  
+  diff = treatment_mean - control_mean
+  
+  train %>%
+    group_by(treatment) %>%
+    summarise(avg_inc = mean(income)) %>%
+    # get on the same row
+    pivot_wider(names_from = treatment, values_from = avg_inc) %>%
+    mutate(Difference = Treated-Control)
+```
+
+
